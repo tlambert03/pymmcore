@@ -57,12 +57,10 @@ class build_ext(setuptools.command.build_ext.build_ext):
         super().run()
 
 
-define_macros = [
-    ("MMDEVICE_CLIENT_BUILD", None),
-] + ([
-    ("NOMINMAX", None),
-    ("_CRT_SECURE_NO_WARNINGS", None),
-] if IS_WINDOWS else [])
+define_macros = [("MMDEVICE_CLIENT_BUILD", None)]
+if IS_WINDOWS:
+    define_macros += [("NOMINMAX", None), ("_CRT_SECURE_NO_WARNINGS", None)]
+
 
 mmdevice_build_info = {
     "sources": [str(x.relative_to(ROOT)) for x in MMDevicePath.glob("*.cpp")],
@@ -85,7 +83,7 @@ if not IS_WINDOWS:
     cflags = [
         "-std=c++14",
         "-fvisibility=hidden",
-        "-Wno-deprecated",       # Hide warnings for throw() specififiers
+        "-Wno-deprecated",  # Hide warnings for throw() specififiers
         "-Wno-unused-variable",  # Hide warnings for SWIG-generated code
     ]
     if "CFLAGS" in os.environ:
@@ -95,9 +93,7 @@ if not IS_WINDOWS:
 
 mmcore_extension = Extension(
     f"{PKG_NAME}._{SWIG_MOD_NAME}",
-    sources=mmcore_sources + [os.path.join(
-        "src", PKG_NAME, f"{SWIG_MOD_NAME}.i",
-    )],
+    sources=mmcore_sources + [os.path.join("src", PKG_NAME, f"{SWIG_MOD_NAME}.i")],
     swig_opts=[
         "-c++",
         "-python",
@@ -114,8 +110,35 @@ mmcore_extension = Extension(
     define_macros=define_macros,
 )
 
+print(mmcore_sources)
+PYDEVICE_SWIG_MOD_NAME = "pymmdevice_swig"
+mmdevice_extension = Extension(
+    f"{PKG_NAME}._{PYDEVICE_SWIG_MOD_NAME}",
+    sources=mmcore_sources
+    + [os.path.join("src", PKG_NAME, f"{PYDEVICE_SWIG_MOD_NAME}.i")],
+    swig_opts=[
+        "-c++",
+        "-python",
+        "-builtin",
+        "-I./mmCoreAndDevices/MMDevice",
+        "-I./mmCoreAndDevices/MMCore",
+        "-I./mmCoreAndDevices/MMCore/LoadableModules",
+        "-I./mmCoreAndDevices/MMCore/Logging",
+    ],
+    include_dirs=[
+        numpy.get_include(),
+        "./mmCoreAndDevices/MMDevice",
+        "./mmCoreAndDevices/MMCore",
+        "./mmCoreAndDevices/MMCore/LoadableModules",
+        "./mmCoreAndDevices/MMCore/Logging",
+    ],
+    libraries=mmcore_libraries,
+    define_macros=define_macros,
+)
+
 setup(
-    ext_modules=[mmcore_extension],
+    ext_modules=[mmdevice_extension],
+    # ext_modules=[mmcore_extension, mmdevice_extension],
     libraries=[("MMDevice", mmdevice_build_info)],
     cmdclass={"build_ext": build_ext, "build_py": build_py},
 )

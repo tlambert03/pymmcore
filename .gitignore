@@ -6,14 +6,15 @@ venv/
 build/
 dist/
 *.pdb
+*.so
 *.py[cod]
 
 wheelhouse/
 
-src/pymmcore/pymmcore_swig_wrap.h
-src/pymmcore/pymmcore_swig_wrap.cpp
+src/pymmcore/*_wrap.h
+src/pymmcore/*_wrap.cpp
 src/pymmcore/_pymmcore_swig.*
-src/pymmcore/pymmcore_swig.py
+src/pymmcore/*_swig.py
 pymmcore.egg-info
 .mypy_cache/
-
+.vscode/
